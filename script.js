@@ -28,10 +28,20 @@ const transactions = [{ // array de objetos das minhas transações
 ]
 
 const Transaction = {
+    all: transactions,
+    add(transaction) {
+        Transaction.all.push(transaction);
+        app.reload();
+    },
+
+    remove(index) {
+        Transaction.all.splice(index, 1);
+        app.reload();
+    },
     incomes() {
         let income = 0;
         //Somar as entradas
-        transactions.forEach(transaction => {
+        Transaction.all.forEach(transaction => {
             if(Number(transaction.amount) > 0) {
                 income += transaction.amount
             }
@@ -41,7 +51,7 @@ const Transaction = {
     expenses() {
         // Somar as saidas
         let expense = 0;
-        transactions.forEach(transaction => {
+        Transaction.all.forEach(transaction => {
             if(Number(transaction.amount) > 0) {
                 expense += transaction.amount
             }
@@ -79,6 +89,9 @@ const DOM = {
         document.getElementById("incomeDisplay").innerHTML = Utils.formatCurrency(Transaction.incomes());
         document.getElementById("expenseDisplay").innerHTML = Utils.formatCurrency(Transaction.expenses());
         document.getElementById("totalDisplay").innerHTML = Utils.formatCurrency(Transaction.total());
+    },
+    clearTransactions() {
+        DOM.transactionContainer.innerHTML = ""
     }
 }
 
@@ -101,9 +114,26 @@ const Utils = {
 //DOM.addTransaction(transactions[1]);
 //DOM.addTransaction(transactions[2]);
 
-transactions.forEach(transaction => {
-    DOM.addTransaction(transaction);
-});
+const app = {
+    init() {
+        Transaction.all.forEach(transaction => {
+            DOM.addTransaction(transaction);
+        });
+        
+        DOM.updateBalance();
+        
+    },
+    reload() {
+        DOM.clearTransactions();
+        app.init();
+    }
+}
 
-DOM.updateBalance();
+app.init();
 
+Transaction.add({
+    id: 4,
+    description: "Teste",
+    amount: 323,
+    date: "29/05/3030"
+})
