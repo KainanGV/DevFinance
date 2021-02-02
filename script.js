@@ -9,26 +9,20 @@ cancel.addEventListener('click', () => {
     m.classList.remove('active')
 })
 
-const transactions = [{ // array de objetos das minhas transações
-    id: 1,
-    description: 'Luz',
-    amount: -50000,
-    date: '23/01/2021'
-}, {
-    id: 2,
-    description: 'website',
-    amount: 500000,
-    date: '23/01/2021'
-}, {
-    id: 3,
-    description: 'internet',
-    amount: 500,
-    date: '23/01/2021'
-}
-]
+// array de objetos das minhas transações
 
+const storage = {
+    get() {
+        return JSON.parse(localStorage.getItem("dev.finances:transactions")) || []
+    },
+    set(transactions) {
+        localStorage.setItem("dev.finances:transactions",
+        JSON.stringify(transactions))
+    }
+}
 const Transaction = {
-    all: transactions,
+    all: storage.get(),
+
     add(transaction) {
         Transaction.all.push(transaction);
         app.reload();
@@ -69,10 +63,11 @@ const DOM = {
 
     addTransaction(transaction, index) {
         const tr = document.createElement('tr');
-        tr.innerHTML = DOM.innerHtmlTransaction(transaction); // Coloca o corpo thml da minha linha da table
+        tr.innerHTML = DOM.innerHtmlTransaction(transaction, index); // Coloca o corpo thml da minha linha da table
+        tr.dataset.index = index
         DOM.transactionContainer.appendChild(tr); // Depois dos nos criados adiciono no meu Tbody
     },
-    innerHtmlTransaction(transaction) {
+    innerHtmlTransaction(transaction, index) {
         const CSSclass = transaction.amount > 0 ? "income" : "expense";
 
         const amount = Utils.formatCurrency(transaction.amount);
@@ -80,7 +75,7 @@ const DOM = {
             <td class="description">${transaction.description}</td>
             <td class="${CSSclass}"> ${amount}</td>
             <td class="date">${transaction.date}</td>
-            <td><img src="./assets/minus.svg" alt=""></td>
+            <td><img onclick="Transaction.remove(${index})" src="./assets/minus.svg" alt=""></td>
 
         `
         return html;
@@ -106,8 +101,78 @@ const Utils = {
         })
         //console.log(signal);
         return signal + value;
+    },
+
+    formatAmount(value) {
+        value = Number(value) * 100;
+        return value;
+        
+    },
+
+    formatDate(value) {
+        const splittedDate = value.split("-");
+        return `${splittedDate[2]}/${splittedDate[1]}/${splittedDate[0]}`;
     }
 }
+
+const Form = {
+    description: document.querySelector("input#description"),
+    amount: document.querySelector("input#amount"),
+    date: document.querySelector("input#date"),
+    validateFileds() {
+        const {description, amount, date} = Form.getValues();
+        if(description.trim() === "" || amount.trim() === "" || date.trim() === "") {
+            throw new Error("Por favor preencha os campos");
+        }
+    },
+    getValues() {
+        return {
+            description: this.description.value,
+            amount: this.amount.value,
+            date: this.date.value
+        }
+    },
+
+    save(transaction){
+        Transaction.add(transaction);
+    },
+    clearFields() {
+        this.description.value = ""
+        this.amount.value = ""
+        this.date.value = ""
+    },
+
+    formatData() {
+        let {description, amount, date} = Form.getValues();
+        amount = Utils.formatAmount(amount);
+        date = Utils.formatDate(date);
+
+        return {
+            description,
+            amount,
+            date
+        }
+    },
+
+    submit(event) {
+        try {
+            this.validateFileds();
+
+            const transaction = this.formatData();
+
+            this.save(transaction);
+
+            this.clearFields();
+
+
+        } catch (error) {
+            alert(error.message);
+        }
+        event.preventDefault();
+    }
+}
+
+
 
 
 //DOM.addTransaction(transactions[0]);
@@ -116,24 +181,14 @@ const Utils = {
 
 const app = {
     init() {
-        Transaction.all.forEach(transaction => {
-            DOM.addTransaction(transaction);
-        });
+        Transaction.all.forEach(DOM.addTransaction)
         
         DOM.updateBalance();
-        
+        storage.set(Transaction.all)
     },
     reload() {
         DOM.clearTransactions();
         app.init();
     }
 }
-
 app.init();
-
-Transaction.add({
-    id: 4,
-    description: "Teste",
-    amount: 323,
-    date: "29/05/3030"
-})
