@@ -10,18 +10,21 @@ cancel.addEventListener('click', () => {
 })
 
 // array de objetos das minhas transações
-
-const storage = {
+let Modal = {
+    toggle() {
+        m.classList.remove('active')
+    }
+}
+const Storage = {
     get() {
-        return JSON.parse(localStorage.getItem("dev.finances:transactions")) || []
+        return JSON.parse(localStorage.getItem("dev.finances: transactions")) || []
     },
     set(transactions) {
-        localStorage.setItem("dev.finances:transactions",
-        JSON.stringify(transactions))
+        localStorage.setItem("dev.finances: transactions",JSON.stringify(transactions))
     }
 }
 const Transaction = {
-    all: storage.get(),
+    all: Storage.get(),
 
     add(transaction) {
         Transaction.all.push(transaction);
@@ -46,7 +49,7 @@ const Transaction = {
         // Somar as saidas
         let expense = 0;
         Transaction.all.forEach(transaction => {
-            if(Number(transaction.amount) > 0) {
+            if(Number(transaction.amount) < 0) {
                 expense += transaction.amount
             }
         })
@@ -63,7 +66,7 @@ const DOM = {
 
     addTransaction(transaction, index) {
         const tr = document.createElement('tr');
-        tr.innerHTML = DOM.innerHtmlTransaction(transaction, index); // Coloca o corpo thml da minha linha da table
+        tr.innerHTML = DOM.innerHtmlTransaction(transaction); // Coloca o corpo thml da minha linha da table
         tr.dataset.index = index
         DOM.transactionContainer.appendChild(tr); // Depois dos nos criados adiciono no meu Tbody
     },
@@ -164,6 +167,7 @@ const Form = {
 
             this.clearFields();
 
+            Modal.toggle();
 
         } catch (error) {
             alert(error.message);
@@ -184,7 +188,10 @@ const app = {
         Transaction.all.forEach(DOM.addTransaction)
         
         DOM.updateBalance();
-        storage.set(Transaction.all)
+
+        Storage.set(Transaction.all)
+
+        
     },
     reload() {
         DOM.clearTransactions();
